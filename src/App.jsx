@@ -1,15 +1,23 @@
-import { createElement, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Spinner from "./components/Spinner";
 import Quiz from "./components/Quiz";
 
 function App() {
+  //number --- Keep track of question number
   const [number, setNumber] = useState(0);
+  //questions --- data fetched from api
   const [questions, setQuestions] = useState([]);
+  //showError --- used to show error if error occur during fetching data
   const [showError, setShowError] = useState(false);
+  //selectedOption --- keep track of option that user selected
   const [selectedOption, setSelectedOption] = useState(null);
+  //score --- keep track of score
   const [score, setScore] = useState(0);
+  //gameOver --- to keep track of game state
   const [gameOver, setGameOver] = useState(false);
+  //rand --- used to put correct_answer in random position in options 
   let rand = useRef(Math.floor(Math.random() * 4));
+  //fetchData --- async function to fetch data from api
   const fetchData = async () => {
     try {
       const response = await fetch('https://opentdb.com/api.php?amount=10&category=18&type=multiple');
@@ -22,16 +30,19 @@ function App() {
       setShowError(true);
     }
   }
+  //randomOptions --- function to suffle positions of options
   const randomOptions = () => {
     const options = questions[number].incorrect_answers.map(element => formatData(element));
     options.splice(rand.current, 0, formatData(questions[number].correct_answer));
     return options;
   }
+  //formatData --- function to correct string of questions and options fetched from api
   const formatData = (str) => {
     const div = document.createElement('div');
     div.innerHTML = str;
     return div.innerHTML;
   }
+  //onSelectedOption --- execute when user click on one of the option
   const onSelectOption = (option) => {
     if (option === questions[number].correct_answer) {
       setScore(score + 1);
@@ -56,6 +67,7 @@ function App() {
     showError(false);
     rand.current = Math.floor(Math.random() * 4);
   }
+  //fetch data when game starts or when use clicks play again
   useEffect(() => {
     if (!gameOver) {
       fetchData();
