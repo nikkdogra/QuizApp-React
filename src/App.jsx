@@ -1,100 +1,107 @@
-import { useEffect, useRef, useState } from "react";
-import Spinner from "./components/Spinner";
-import Quiz from "./components/Quiz";
+import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Quiz from './components/Quiz';
+import { useEffect, useRef, useState } from 'react';
+import Spinner from './components/Spinner';
 
 function App() {
-  //number --- Keep track of question number
+  const api = 'https://opentdb.com/api.php?amount=10&category=18&type=multiple';
+  const [quiz, setQuiz] = useState(null);
   const [number, setNumber] = useState(0);
-  //questions --- data fetched from api
-  const [questions, setQuestions] = useState([]);
-  //showError --- used to show error if error occur during fetching data
-  const [showError, setShowError] = useState(false);
-  //selectedOption --- keep track of option that user selected
-  const [selectedOption, setSelectedOption] = useState(null);
-  //score --- keep track of score
-  const [score, setScore] = useState(0);
-  //gameOver --- to keep track of game state
+  const [counter, setCounter] = useState(10);
+  const [bg, setBg] = useState('primary');
+  const [error, setError] = useState(null);
   const [gameOver, setGameOver] = useState(false);
-  //rand --- used to put correct_answer in random position in options 
-  let rand = useRef(Math.floor(Math.random() * 4));
-  //fetchData --- async function to fetch data from api
-  const fetchData = async () => {
+  const containerRef = useRef(null);
+  const animationTimerId = useRef(null);
+  const counterTimerId = useRef(null);
+
+  const fetchQuiz = async () => {
     try {
-      const response = await fetch('https://opentdb.com/api.php?amount=10&category=18&type=multiple');
+      const response = await fetch(api);
       if (!response.ok) {
-        throw Error;
+        setError('Something went wrong! Try Later');
+        return;
       }
       const data = await response.json();
-      setQuestions(data.results);
+      setQuiz(data.results);
+      setError(null);
+      counterTimer();
     } catch (e) {
-      setShowError(true);
+      setError('Poor Internet Connection!');
     }
   }
-  //randomOptions --- function to suffle positions of options
-  const randomOptions = () => {
-    const options = questions[number].incorrect_answers.map(element => formatData(element));
-    options.splice(rand.current, 0, formatData(questions[number].correct_answer));
-    return options;
-  }
-  //formatData --- function to correct string of questions and options fetched from api
-  const formatData = (str) => {
-    const div = document.createElement('div');
-    div.innerHTML = str;
-    return div.innerHTML;
-  }
-  //onSelectedOption --- execute when user click on one of the option
-  const onSelectOption = (option) => {
-    if (option === questions[number].correct_answer) {
-      setScore(score + 1);
+
+  const shake = () => {
+    containerRef.current.classList.add('shake');
+    if (animationTimerId.current) {
+      clearTimeout(animationTimerId.current);
     }
-    setSelectedOption(option);
+    animationTimerId.current = setTimeout(() => {
+      containerRef.current.classList.remove('shake');
+    }, 1000);
   }
-  const handleNextClick = () => {
-    if (number >= questions.length-1) {
-      setGameOver(true);
-      return;
+
+  const changeBg = (value) => {
+    setBg(value);
+    if (value === 'danger') {
+      shake();
     }
-    rand.current = Math.floor(Math.random() * 4);
-    setSelectedOption(null);
-    setNumber(number + 1);
   }
-  const handlePlayAgainClick = () => {
-    setGameOver(false);
+
+  const handlePlayAgain = () => {
+    setQuiz(null);
     setNumber(0);
-    setQuestions([]);
-    setSelectedOption(null);
-    setScore(0);
-    showError(false);
-    rand.current = Math.floor(Math.random() * 4);
+    setGameOver(false);
+    setCounter(10);
+    fetchQuiz();
   }
-  //fetch data when game starts or when use clicks play again
-  useEffect(() => {
-    if (!gameOver) {
-      fetchData();
+
+  const counterTimer = () => {
+    if (counterTimerId.current) {
+      clearInterval(counterTimerId.current);
     }
-  }, [gameOver]);
-  return (
-    <div className={`container-fluid min-vh-100 py-5 bg-${selectedOption ? (selectedOption === questions[number].correct_answer ? 'success' : 'danger') : 'primary'}`}>
-      <div className="w-75 w-sm-50 mx-auto p-4 rounded text-light" style={{ background: '#0F2167' }}>
-        <h1>Programming Quiz</h1>
-        <hr className="text-light" />
-        {
-          gameOver
-            ?
-            <h4>Congrats! You Scored {score} out of 10</h4>
-            :
-            (questions.length
-              ?
-              <Quiz question={formatData(questions[number].question)} number={number} options={randomOptions()} onSelectOption={onSelectOption} selectedOption={selectedOption} correct={formatData(questions[number].correct_answer)} />
-              :
-              <Spinner showError={showError} />)
+    counterTimerId.current = setInterval(() => {
+      setCounter((counter) => {
+        if (counter <= 0) {
+          clearInterval(counterTimerId.current);
+          return 0;
+        } else {
+          return counter - 1;
         }
-        {
-          selectedOption
-          &&
-          <div className="text-center">
-            <button className="btn btn-light mt-2 px-4" onClick={gameOver ? handlePlayAgainClick : handleNextClick}>{gameOver ? 'Play Again' : 'Next'}</button>
+      });
+    }, 1000);
+  }
+
+  const handleNextClick = () => {
+    setNumber(number + 1);
+    setCounter(10);
+    counterTimer();
+  }
+  if (counter === 0 && !gameOver) {
+    setGameOver(true);
+  }
+
+  useEffect(() => {
+    fetchQuiz();
+  }, []);
+  return (
+    <div className={`min-vh-100 pt-5 bg-${bg}`}>
+      <div ref={containerRef} className='bg-white col-10 col-md-6 mx-auto rounded p-3 text-primary'>
+        <div className='d-flex flex-column flex-sm-row justify-content-between align-items-center'>
+          <h2 className='order-2 order-sm-0 mt-2 mt-sm-none'>Programming Quiz</h2>
+          <div className='timer d-flex align-items-center fs-5 gap-3 rounded p-1 border bg-primary text-light'>
+            Time left
+            <div className={`px-2 py-1 bg-dark text-${counter < 4 ? 'danger' : 'light'} rounded`}>{(counter < 10 && counter > 0) ? '0' + counter : counter}</div>
           </div>
+        </div>
+        <hr />
+        {
+          quiz
+            ?
+            <Quiz ques={quiz[number].question} incorrect={quiz[number].incorrect_answers} correct={quiz[number].correct_answer} quesNo={number + 1} changeBg={changeBg} onNext={handleNextClick} onPlayAgain={handlePlayAgain} gameOver={gameOver} onGameOver={() => setGameOver(true)} stopCounter={() => clearInterval(counterTimerId.current)} />
+            :
+            <Spinner error={error} />
         }
       </div>
     </div>

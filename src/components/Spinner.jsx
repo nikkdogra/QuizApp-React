@@ -1,8 +1,13 @@
-function Spinner({showError}) {
+function Spinner({ error }) {
     return (
-        <div className={`text-center py-5 text-${showError ? 'danger' : 'light'}`}>
-            <div className="spinner-border" style={{ width: '3rem', height: '3rem' }} role="status"></div>
-            <p className='text-center fs-4 mt-1'>{showError ? 'Error in generating Quiz, Try Later!' : 'Generating Quiz...'}</p>
+        <div className="text-center">
+            {
+                error
+                    ?
+                    <p className="fs-3 text-danger">{error}</p>
+                    :
+                    <div className="spinner spinner-border text-primary" role="status"></div>
+            }
         </div>
     )
 }

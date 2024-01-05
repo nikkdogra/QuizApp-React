@@ -1,1 +1,20 @@
-
+.spinner{
+    width: 5rem !important;
+    height: 5rem !important;
+}
+@keyframes shakeContainer {
+    0%{
+        transform: translateX(10px);
+    }
+    100%{
+        transform: translateX(-10px);
+    }
+}
+.shake{
+    animation: shakeContainer 0.1s linear 5;
+}
+@media (max-width: 576px) {
+    html{
+        font-size: 12px;
+    }    
+}

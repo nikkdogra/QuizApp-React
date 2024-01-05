@@ -1,10 +1,6 @@
-function Option({ children, onSelectOption, selectedOption, correct }) {
-    const color = selectedOption ? (children === correct ? 'success' : (children === selectedOption ? 'danger' : 'light')) : 'light';
-    return (
-        <button className={`btn btn-${color} d-flex align-items-center justify-content-between w-100 text-start p-2 my-3 fs-5 ${selectedOption && 'disabled'}`} onClick={() => onSelectOption(children)}>
-            {children}
-            {<i className={`${color === 'light' ? 'invisible' : 'visible'} text-light fa-solid fa-circle-${color === 'danger' ? 'xmark' : 'check'}`}></i>}
-        </button>
-    )
+
+function Option({value,isCorrect,onSelect,select}){
+    const btnClass = isCorrect ? 'success' : (value === select ? 'danger' : 'outline-primary'); 
+    return <button onClick={() => onSelect(value)} className={`btn btn-${btnClass} text-start py-2 px-3 fw-bolder my-2 w-100 ${select && 'disabled'}`}>{value}</button>
 }
 export default Option;
